@@ -3,32 +3,23 @@ name: sign_package
 jobs:
 - job: Sign package
   steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: '{{.cds.workspace}}'
+      privateKey: proj-stash.key
+      url: '{{.git.url}}'
   - artifactDownload:
       path: .
       tag: '{{.cds.version}}'
   - script:
-    - '#!/bin/sh'
+    - ls
+    - worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
     - tar xf binary.tar.gz
-    - echo '{{.cds.env.signing_key.priv}}' >  signing_key.priv
+    - env
     - ""
-    - '#cat <<EOF > signing_key.priv'
-    - '#{{.cds.env.signing_key.priv}}'
-    - '#EOF'
+    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign -S -m {} -s "signing_key.priv" \;
+    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec echo {} \;
     - ""
-    - cat signing_key.priv
-    - key=signing_key.priv
-    - path={{.cds.workspace}}/source
-    - ""
-    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \)
-      -exec ./usign -S -m {} -s "signing_key.priv" \;
-    - '#  -exec echo {} \;'
-    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \)
-      -exec echo {} \;
-    - ""
-    - ""
-    - ""
-  - artifactUpload:
-      path: usign
-      tag: '{{.cds.version}}'
   requirements:
   - binary: git

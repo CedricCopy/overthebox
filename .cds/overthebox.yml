@@ -25,3 +25,45 @@ metadata:
 permissions:
   compute.gra1: 5
   OTB: 7
+notifications:
+- type: vcs
+  pipelines:
+  - sign_package
+  - overthebox-build
+  settings:
+    on_success: always
+    template:
+      body: |
+        [[- if .Stages ]]
+        CDS Report [[.WorkflowNodeName]]#[[.Number]].[[.SubNumber]] [[ if eq .Status "Success" -]] ✔ [[ else ]][[ if eq .Status "Fail" -]] ✘ [[ else ]][[ if eq .Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+        [[- range $s := .Stages]]
+        [[- if $s.RunJobs ]]
+        * [[$s.Name]]
+        [[- range $j := $s.RunJobs]]
+          * [[$j.Job.Action.Name]] [[ if eq $j.Status "Success" -]] ✔ [[ else ]][[ if eq $j.Status "Fail" -]] ✘ [[ else ]][[ if eq $j.Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+        [[- end]]
+        [[- end]]
+        [[- end]]
+        [[- end]]
+
+        [[- if .Tests ]]
+        [[- if gt .Tests.TotalKO 0]]
+        Unit Tests Report
+
+        [[- range $ts := .Tests.TestSuites]]
+        * [[ $ts.Name ]]
+        [[range $tc := $ts.TestCases]]
+          [[- if or ($tc.Errors) ($tc.Failures) ]]  * [[ $tc.Name ]] ✘ [[- end]]
+        [[end]]
+        [[- end]]
+        [[- end]]
+        [[- end]]
+        [[- if {{.workflow.overthebox-build.logcontent }} ]] 
+            Logs from the build 
+            ``` 
+            {{.workflow.overthebox-build.logcontent | b64dec}} 
+            ``` 
+        [[- end]] 
+
+      disable_comment: false
+      disable_status: false
