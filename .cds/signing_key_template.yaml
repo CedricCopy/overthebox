@@ -1,0 +1,1 @@
+{{.cds.env.signing_key.priv}}

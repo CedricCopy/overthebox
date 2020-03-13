@@ -8,12 +8,14 @@ jobs:
       commit: '{{.git.hash}}'
       directory: '{{.cds.workspace}}'
       privateKey: proj-stash.key
-      url: git@github.com:CedricCopy/overthebox.git
+      url: '{{.git.url}}'
   - script:
     - '#!/bin/sh'
     - export FORCE_UNSAFE_CONFIGURE=1
-    - '{{.cds.workspace}}/build.sh -j16'
+    - '{{.cds.workspace}}/build.sh -j32 | tee build.log'
     - tar cvf binary.tar.gz source/bin
+    - BUILD_LOG=$(cat build.log | tail -n 200 | base64)
+    - worker export logcontent $BUILD_LOG
   - artifactUpload:
       path: '{{.cds.workspace}}/binary.tar.gz'
       tag: '{{.cds.version}}'
