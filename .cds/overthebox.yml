@@ -15,7 +15,7 @@ workflow:
       git.tag: ""
   sign_package:
     depends_on:
-    - build_feeds
+    - overthebox-build
     when:
     - success
     pipeline: sign_package
