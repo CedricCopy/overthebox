@@ -22,3 +22,7 @@ workflow:
     environment: signing_prod
 metadata:
   default_tags: git.branch,git.author
+permissions:
+  compute.gra1: 4
+  OTB: 7
+  ovh: 4
