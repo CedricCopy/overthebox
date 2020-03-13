@@ -1,4 +1,4 @@
-name: OTB_Feeds
+name: OTB_Build
 description: Build for OTB
 version: v2.0
 workflow:
@@ -11,7 +11,7 @@ workflow:
       git.hash: ""
       git.hash.before: ""
       git.message: ""
-      git.repository: CedricCopy/overthebox-feeds
+      git.repository: CedricCopy/overthebox
       git.tag: ""
   sign_package:
     depends_on:
