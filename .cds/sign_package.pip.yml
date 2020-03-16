@@ -3,12 +3,7 @@ name: sign_package
 jobs:
 - job: Sign package
   steps:
-  - gitClone:
-      branch: '{{.git.branch}}'
-      commit: '{{.git.hash}}'
-      directory: '{{.cds.workspace}}'
-      privateKey: proj-stash.key
-      url: '{{.git.url}}'
+  - checkout: '{{.cds.workspace}}'
   - artifactDownload:
       path: .
       tag: '{{.cds.version}}'
@@ -37,5 +32,6 @@ jobs:
       artifacts: '{{.cds.workspace}}/source/bin/packages/x86_64/base/Packages'
       tag: '{{.cds.release.version}}'
       title: 'x86_64-base-package'
+      releaseNote: 'TestingRelease'
   requirements:
   - binary: git

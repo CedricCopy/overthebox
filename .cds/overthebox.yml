@@ -58,10 +58,10 @@ notifications:
         [[- end]]
         [[- end]]
         [[- end]]
-        [[- if {{.workflow.overthebox-build.logcontent }} ]] 
+        [[- if .workflow.overthebox-build.logcontent ]] 
             Logs from the build 
             ``` 
-            {{.workflow.overthebox-build.logcontent | b64dec}} 
+            {{.workflow.overthebox-build.logcontent | b64dec}}
             ``` 
         [[- end]] 
         Testing comment

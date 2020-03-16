@@ -3,12 +3,7 @@ name: overthebox-build
 jobs:
 - job: Build image feeds
   steps:
-  - gitClone:
-      branch: '{{.git.branch}}'
-      commit: '{{.git.hash}}'
-      directory: '{{.cds.workspace}}'
-      privateKey: proj-stash.key
-      url: '{{.git.url}}'
+  - checkout: '{{.cds.workspace}}'
   - script: 
     - '#!/bin/sh'
     -  NB_PROC=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
