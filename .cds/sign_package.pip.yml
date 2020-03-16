@@ -12,14 +12,30 @@ jobs:
   - artifactDownload:
       path: .
       tag: '{{.cds.version}}'
-  - script:
-    - ls
-    - worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
-    - tar xf binary.tar.gz
-    - env
-    - ""
-    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign -S -m {} -s "signing_key.priv" \;
-    - find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec echo {} \;
-    - ""
+  - script: |
+      worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
+      tar xf binary.tar.gz
+      env
+      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign -S -m {} -s "signing_key.priv" \;
+      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec echo {} \;
+  - artifactUpload:
+      path: '{{.cds.workspace}}/source/bin/packages/x86_64/overthebox/Packages'
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: '{{.cds.workspace}}/source/bin/packages/x86_64/luci/Packages'
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: '{{.cds.workspace}}/source/bin/packages/x86_64/packages/Packages'
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: '{{.cds.workspace}}/source/bin/packages/x86_64/routing/Packages'
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: '{{.cds.workspace}}/source/bin/packages/x86_64/base/Packages'
+      tag: '{{.cds.version}}'
+  - release:
+      artifacts: '{{.cds.workspace}}/source/bin/packages/x86_64/base/Packages'
+      tag: '{{.cds.release.version}}'
+      title: 'x86_64-base-package'
   requirements:
   - binary: git

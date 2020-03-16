@@ -9,13 +9,14 @@ jobs:
       directory: '{{.cds.workspace}}'
       privateKey: proj-stash.key
       url: '{{.git.url}}'
-  - script:
+  - script: 
     - '#!/bin/sh'
-    - export FORCE_UNSAFE_CONFIGURE=1
-    - '{{.cds.workspace}}/build.sh -j32 | tee build.log'
-    - tar cvf binary.tar.gz source/bin
-    - BUILD_LOG=$(cat build.log | tail -n 200 | base64)
-    - worker export logcontent $BUILD_LOG
+    -  NB_PROC=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
+    -  export FORCE_UNSAFE_CONFIGURE=1
+    -  '{{.cds.workspace}}/build.sh -j$NB_PROC | tee build.log'
+    -  tar cvf binary.tar.gz source/bin
+    -  BUILD_LOG=$(cat build.log | tail -n 200 | base64)
+    -  worker export logcontent "$BUILD_LOG"
   - artifactUpload:
       path: '{{.cds.workspace}}/binary.tar.gz'
       tag: '{{.cds.version}}'
