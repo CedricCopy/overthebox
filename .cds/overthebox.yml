@@ -64,6 +64,7 @@ notifications:
             {{.workflow.overthebox-build.logcontent | b64dec}} 
             ``` 
         [[- end]] 
+        Testing comment
 
       disable_comment: false
       disable_status: false
