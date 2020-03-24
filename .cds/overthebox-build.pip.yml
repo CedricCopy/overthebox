@@ -1,22 +1,37 @@
 version: v1.0
 name: overthebox-build
 jobs:
-- job: Build image feeds
-  steps:
+- job: Build image
+  steps: 
   - checkout: '{{.cds.workspace}}'
-  - script: 
-    - '#!/bin/sh'
-    -  NB_PROC=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
-    -  export FORCE_UNSAFE_CONFIGURE=1
-    -  '{{.cds.workspace}}/build.sh -j$NB_PROC | tee build.log'
-    -  tar cvf binary.tar.gz source/bin
-    -  BUILD_LOG=$(cat build.log | tail -n 200 | base64)
-    -  worker export logcontent "$BUILD_LOG"
+  - optional: true
+    script: |
+      NB_PROC=$(cat /proc/cpuinfo | grep -i "^processor" | wc -l)
+      export OTB_TARGET={{ .cds.env.build_arch | default "x86_64" }}
+      export FORCE_UNSAFE_CONFIGURE=1
+      sh {{.cds.workspace}}/build.sh -j$NB_PROC 
+      tar cvf binary-{{.cds.env.build_arch}}.tar.gz source/bin
+      cp {{.cds.workspace}}/source/staging_dir/host/bin/usign usign-{{.cds.env.build_arch}}
+      worker export logcontent-{{.cds.env.build_arch}} "Build ok"
+  - script: |
+      if [ ! -f binary-{{.cds.env.build_arch}}.tar.gz ]
+      then
+        cd source
+        make -j1 V=s 2>&1 | grep -i "error" | tee build.log 
+      fi
+  - always_executed: true
+    script: |
+      if [ -f source/build.log ]
+      then
+        BUILD_LOG=$(cat source/build.log | base64)
+        cat source/build.log
+      fi
+      worker export logcontent-{{.cds.env.build_arch}} "$BUILD_LOG"
   - artifactUpload:
-      path: '{{.cds.workspace}}/binary.tar.gz'
+      path: '{{.cds.workspace}}/binary-{{.cds.env.build_arch}}.tar.gz'
       tag: '{{.cds.version}}'
   - artifactUpload:
-      path: '{{.cds.workspace}}/source/staging_dir/host/bin/usign'
+      path: 'usign-{{.cds.env.build_arch}}'
       tag: '{{.cds.version}}'
   requirements:
   - model: compute.gra1/Debian10-GRA1
