@@ -9,29 +9,31 @@ jobs:
       tag: '{{.cds.version}}'
   - script: |
       worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
-      tar xf binary.tar.gz
-      env
-      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign -S -m {} -s "signing_key.priv" \;
-      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec echo {} \;
+      for ARCHIVE_FILE in $(ls *.tar.gz)
+      do
+        tar xf $ARCHIVE_FILE 
+      done
+      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign-x86_64 -S -m {} -s "signing_key.priv" \;
+      tar cf "{{.cds.workspace}}/binary_signed.tar.gz" source
+      SSH_KEY_FILE=.ssh/id_rsa
+      worker key install env-deploy --file $SSH_KEY_FILE
+      DEPLOY_USERNAME={{.cds.env.deployUsername | default "deploy"}}
+      DEPLOY_PORT={{.cds.env.deployPort | default "22"}}
+      DEPLOY_DESTINATION={{.git.branch | default .git.tag}}
+      DEPLOY_SERVER={{.cds.env.deployServer}}
+      SSH_OPTION="-i $SSH_KEY_FILE -o StrictHostKeyChecking=no -p $DEPLOY_PORT"
+      OTB_PATH="ovh/{{.git.repository}}/$DEPLOY_DESTINATION"
+      IFS=','
+      for DEPLOY_HOST in $DEPLOY_SERVER
+      do
+        unset IFS
+        ssh $SSH_OPTION $DEPLOY_USERNAME@$DEPLOY_HOST mkdir -p deploy/$OTB_PATH
+        echo "ssh $SSH_OPTION $DEPLOY_USERNAME@$DEPLOY_HOST mkdir -p deploy/$OTB_PATH"
+        rsync -av --delete-after -e "ssh $SSH_OPTION" source/bin/ $DEPLOY_USERNAME@$DEPLOY_HOST:deploy/$OTB_PATH/
+      done
   - artifactUpload:
-      path: '{{.cds.workspace}}/source/bin/packages/x86_64/overthebox/Packages'
+      path: '{{.cds.workspace}}/binary_signed.tar.gz'
       tag: '{{.cds.version}}'
-  - artifactUpload:
-      path: '{{.cds.workspace}}/source/bin/packages/x86_64/luci/Packages'
-      tag: '{{.cds.version}}'
-  - artifactUpload:
-      path: '{{.cds.workspace}}/source/bin/packages/x86_64/packages/Packages'
-      tag: '{{.cds.version}}'
-  - artifactUpload:
-      path: '{{.cds.workspace}}/source/bin/packages/x86_64/routing/Packages'
-      tag: '{{.cds.version}}'
-  - artifactUpload:
-      path: '{{.cds.workspace}}/source/bin/packages/x86_64/base/Packages'
-      tag: '{{.cds.version}}'
-  - release:
-      artifacts: '{{.cds.workspace}}/source/bin/packages/x86_64/base/Packages'
-      tag: '{{.cds.release.version}}'
-      title: 'x86_64-base-package'
-      releaseNote: 'TestingRelease'
   requirements:
   - binary: git
+  - binary: rsync

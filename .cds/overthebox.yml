@@ -2,8 +2,7 @@ name: OTB_Build
 description: Build for OTB
 version: v2.0
 workflow:
-  overthebox-build:
-    pipeline: overthebox-build
+  fork-hook:
     application: overthebox_dev_ccopy
     payload:
       git.author: ""
@@ -13,11 +12,27 @@ workflow:
       git.message: ""
       git.repository: CedricCopy/overthebox
       git.tag: ""
-  sign_package:
+  overthebox-build-x86_64:
     depends_on:
-    - overthebox-build
+    - fork-hook
+    pipeline: overthebox-build
+    application: overthebox_dev_ccopy
+    environment: x86_64_build
+  overthebox-build-rpi3:
+    depends_on:
+    - fork-hook
+    pipeline: overthebox-build
+    application: overthebox_dev_ccopy
+    environment: rpi3_build
+  join_build:
+    depends_on:
+    - overthebox-build-x86_64
+    - overthebox-build-rpi3
     when:
     - success
+  sign_package:
+    depends_on:
+    - join_build
     pipeline: sign_package
     environment: signing_prod
 metadata:
@@ -28,8 +43,8 @@ permissions:
 notifications:
 - type: vcs
   pipelines:
-  - sign_package
-  - overthebox-build
+  - overthebox-build-rpi3
+  - overthebox-build-x86_64
   settings:
     on_success: always
     template:
@@ -40,7 +55,19 @@ notifications:
         [[- if $s.RunJobs ]]
         * [[$s.Name]]
         [[- range $j := $s.RunJobs]]
-          * [[$j.Job.Action.Name]] [[ if eq $j.Status "Success" -]] ✔ [[ else ]][[ if eq $j.Status "Fail" -]] ✘ [[ else ]][[ if eq $j.Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
+          * [[$j.Job.Action.Name]] 
+        [[- if eq $j.Status "Success" -]] ✔ [[ else ]] 
+        [[- if eq $j.Status "Fail" -]] ✘ 
+        Logs from the build x86_64
+        ``` 
+        {{.cds.build.logcontent-x86_64 | default "" | b64dec }}
+        ``` 
+        Logs from the build rpi3
+        ``` 
+        {{.cds.build.logcontent-rpi3 | default "" | b64dec }}
+        ``` 
+        [[ else ]]
+        [[- if eq $j.Status "Stopped" -]] ■ [[ else ]]- [[ end ]] [[ end ]] [[ end ]]
         [[- end]]
         [[- end]]
         [[- end]]
@@ -58,13 +85,6 @@ notifications:
         [[- end]]
         [[- end]]
         [[- end]]
-        [[- if .workflow.overthebox-build.logcontent ]] 
-            Logs from the build 
-            ``` 
-            {{.workflow.overthebox-build.logcontent | b64dec}}
-            ``` 
-        [[- end]] 
-        Testing comment
 
       disable_comment: false
       disable_status: false
