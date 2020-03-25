@@ -1,4 +1,4 @@
-name: OTB_Build
+name: OTB_Build_dev
 description: Build for OTB
 version: v2.0
 workflow:

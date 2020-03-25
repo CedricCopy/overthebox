@@ -12,7 +12,11 @@ jobs:
       do
         tar xf $ARCHIVE_FILE 
       done
-      if [ "x{{.cds.git.branch}}" = "xmaster" ]
+      echo "Branch :{{.git.branch}}"
+      BRANCH={{.git.branch | default ""}} 
+      echo $BRANCH
+      env
+      if [ "x$BRANCH" = "xmaster" ]
       then
         echo "On master branch, signing"
         worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
