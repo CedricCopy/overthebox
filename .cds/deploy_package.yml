@@ -12,11 +12,7 @@ jobs:
       do
         tar xf $ARCHIVE_FILE 
       done
-      echo "Branch :{{.git.branch}}"
-      BRANCH={{.git.branch | default ""}} 
-      echo $BRANCH
-      env
-      if [ "x$BRANCH" = "xmaster" ]
+      if [ "x{{.git.branch}}" = "xmaster" ] || [ -n "{{.git.tag}}" ]
       then
         echo "On master branch, signing"
         worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
@@ -27,7 +23,7 @@ jobs:
       worker key install env-deploy --file $SSH_KEY_FILE
       DEPLOY_USERNAME={{.cds.env.deployUsername | default "deploy"}}
       DEPLOY_PORT={{.cds.env.deployPort | default "22"}}
-      DEPLOY_DESTINATION={{.git.branch | default .git.tag}}
+      DEPLOY_DESTINATION={{.git.tag | default .git.branch}}
       DEPLOY_SERVER={{.cds.env.deployServer}}
       SSH_OPTION="-i $SSH_KEY_FILE -o StrictHostKeyChecking=no -p $DEPLOY_PORT"
       OTB_PATH="ovh/{{.git.repository}}/$DEPLOY_DESTINATION"
