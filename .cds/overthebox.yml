@@ -30,10 +30,10 @@ workflow:
     - overthebox-build-rpi3
     when:
     - success
-  sign_package:
+  deploy_package:
     depends_on:
     - join_build
-    pipeline: sign_package
+    pipeline: deploy_package
     environment: signing_prod
 metadata:
   default_tags: git.branch,git.author
