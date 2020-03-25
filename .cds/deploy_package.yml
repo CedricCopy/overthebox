@@ -1,20 +1,24 @@
 version: v1.0
-name: sign_package
+name: deploy_package
 jobs:
-- job: Sign package
+- job: Deploy package
   steps:
   - checkout: '{{.cds.workspace}}'
   - artifactDownload:
       path: .
       tag: '{{.cds.version}}'
   - script: |
-      worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
       for ARCHIVE_FILE in $(ls *.tar.gz)
       do
         tar xf $ARCHIVE_FILE 
       done
-      find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign-x86_64 -S -m {} -s "signing_key.priv" \;
-      tar cf "{{.cds.workspace}}/binary_signed.tar.gz" source
+      if [ "x{{.cds.git.branch}}" = "xmaster" ]
+      then
+        echo "On master branch, signing"
+        worker tmpl {{.cds.workspace}}/.cds/signing_key_template.yaml {{.cds.workspace}}/signing_key.priv
+        find "{{.cds.workspace}}/source" \( -name '*.img.gz' -or -name 'Packages' \) -exec ./usign-x86_64 -S -m {} -s "signing_key.priv" \;
+      fi
+      tar cf "{{.cds.workspace}}/binary_produced.tar.gz" source
       SSH_KEY_FILE=.ssh/id_rsa
       worker key install env-deploy --file $SSH_KEY_FILE
       DEPLOY_USERNAME={{.cds.env.deployUsername | default "deploy"}}
@@ -32,7 +36,7 @@ jobs:
         rsync -av --delete-after -e "ssh $SSH_OPTION" source/bin/ $DEPLOY_USERNAME@$DEPLOY_HOST:deploy/$OTB_PATH/
       done
   - artifactUpload:
-      path: '{{.cds.workspace}}/binary_signed.tar.gz'
+      path: '{{.cds.workspace}}/binary_produced.tar.gz'
       tag: '{{.cds.version}}'
   requirements:
   - binary: git
