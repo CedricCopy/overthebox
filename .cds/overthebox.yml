@@ -5,13 +5,8 @@ workflow:
   fork-hook:
     application: overthebox
     payload:
-      git.author: ""
       git.branch: master
-      git.hash: ""
-      git.hash.before: ""
-      git.message: ""
       git.repository: "ovh/overthebox"
-      git.tag: ""
   overthebox-build-x86_64:
     depends_on:
     - fork-hook
